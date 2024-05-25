@@ -54,31 +54,5 @@ int main(int argc, char* argv[]) {
     //EntradaSalida se conecta con el servidor kernel
     /*int socketEntradaSalidaKer= crear_conexion_cliente(configInterfaz->ipKernel, configInterfaz->puertoKernel);
     handshake_Inicial_CL(socketEntradaSalidaKer);*/
-
-void atender_io(t_list_io *io) {
-  wait(mutex_lista_global)
-  add(lista_global, io)
-  signal(mutex_lista_global)
-
-  while(true) {
-      wait(io->semaforo_cola_procesos_blocked)
-      pcb = pop(io->cola_procesos_blocked)
-
-      respuesta_ok = ejecutar_io(io->fd_interfaz, pcb)
-      if (respuesta_ok) {
-         ...
-      } else {
-         ...
-         break
-      }
-  }
-  
-  wait(mutex_lista_global)
-  remove(lista_global, io)
-  signal(mutex_lista_global)
-}
-
-
-
     return 0;
 }

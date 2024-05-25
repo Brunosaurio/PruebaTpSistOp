@@ -1,8 +1,5 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <utils/hello.h>
-#include <pthread.h>
-#include <unistd.h>
+#include "procesoEnMemoria.h"
 
 struct interfaz{
     int socketInterfaz;
@@ -10,8 +7,11 @@ struct interfaz{
 }typedef interfaz_info;
 
 void procesar_conexiones_memoria();
+void atender_proceso_nuevo();
 int server_escuchar_nuevas_conexiones(int server_socket, t_log* logger);
 void* escuchar_conexiones_IO(int* socketServidor);
+
+
 
 int serverMemoria_escuchar_kernel(int server_socket, t_log* logger);
 void conexion_kernel_memoria();

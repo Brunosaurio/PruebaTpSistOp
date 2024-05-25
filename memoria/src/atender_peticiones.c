@@ -2,6 +2,9 @@
 
 t_log* loggerMemoria;
 t_list* interfacesConectadas;
+t_list* procesosEnMemoria;
+int socketKernel;
+
 ///////////////////////Hilos
 void* escuchar_conexiones_IO(int* socketMemoria){
     //prueba* algo = (prueba*) recibiendo;
@@ -27,6 +30,30 @@ void* escuchar_conexiones_IO(int* socketMemoria){
 }
 
 ////////////////////////Procesar conexiones y peticiones
+
+void atender_proceso_nuevo(){
+	t_buffer* buffer = buffer_crear();
+	t_proceso_en_memoria* nuevoProceso = malloc(sizeof(t_proceso_en_memoria));
+	char* pathInstrucciones = malloc(sizeof(char*));
+	t_list* instrucciones = list_create();
+	int pid;
+	//recibimos informacion
+	stream_recibir_buffer(socketKernel, buffer);
+	buffer_desempaquetar(buffer, &pid, sizeof(int));
+	buffer_desempaquetar_string(buffer, &pathInstrucciones);
+
+	log_info(loggerMemoria, "Llego la intencion de crear al proceso %d, con la ruta de pseudocodigo %s", pid, pathInstrucciones);
+	
+	//Procesamos instrucciones
+	instrucciones = leer_archivo_y_cargar_instrucciones(instrucciones, pathInstrucciones);
+	
+	nuevoProceso->pid = pid;
+	nuevoProceso->instrucciones = instrucciones;
+	//Agregamos el proceso a los procesos Activos en la memoria. CUIDADO, LAS INSTRUCCIONES HAY Q HACER LE GET AL REVEZ
+	list_add(procesosEnMemoria,nuevoProceso);
+	
+
+}
 void procesar_conexiones_memoria(){
 	log_info(loggerMemoria, "Estoy corriendo");
 	//printf("Te odia chupavergas");
@@ -72,8 +99,20 @@ int server_escuchar_nuevas_conexiones(int server_socket, t_log* logger) {
 
 void conexion_kernel_memoria()
 {
-	log_info(loggerMemoria, "Estoy corriendo");
-
+	while(1){
+		cod_operacion cop = stream_recibir_header(socketKernel);
+		//cod_operacion cop = recibir_operacion(socketKernel);
+		//log_info(loggerMemoria, "Recibido el codigo de operacion: %d", cop);
+		switch(cop){
+			case PROCESO_NUEVO:
+				atender_proceso_nuevo();
+				break;
+			default:
+				log_info(loggerMemoria, "Recibido el codigo de operacion: %d no reconocido", cop);
+				break;
+		}
+		break;
+	}
 
 } 
 

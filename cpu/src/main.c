@@ -5,6 +5,7 @@
 #include <commons/log.h>
 #include "atender_kernel.h"
 
+
 struct cpu_config {
     
     char* IP_MEMORIA;
@@ -41,15 +42,50 @@ t_cpu_config* cargarCpuConfig(char* path, t_log* logger) {
 log_info(logger,"Carga de config completa");
  return cpuConfig;
 }
- void pepito()
- {
-    log_info(cpuLogger, "Estoy corriendo");
+/////////////////////////////////////////////////////////////Mover a donde corresponda
+t_registros* iniciarRegistrosCpu(t_registros* registros){
+    registros->AX = 0;
+    registros->BX = 0;
+    registros->CX = 0;
+    registros->DX = 0;
+    registros->EAX= 0;
+    registros->EBX= 0;
+    registros->ECX= 0;
+    registros->EDX= 0;
+    registros->DI = 0;
+    registros->PC = 0;
+    registros->SI = 0;
+    return registros;
+}
+//Esto se debe hacer cada vez que se reciba 
+void cpu_ejecutar_ciclo_de_instruccion() {
+    rastrear_instruccion(); //fetch
+    decodificar_instruccion(); //decode
+    ejecutar_instruccion(); //execute
+    check_interrupt();
+}
+
+void rastrear_instruccion(){
+    //Tengo que pedir una instruccion a Memoria
+}
+
+void decodificar_instruccion(){
+    //recibo alguna estructura que contenga todos los datos necesarios de la instruccion
+}
+
+void ejecutar_instruccion(){
+    //Modifico lo que sea que daba modificar
+}
+ void check_interrupt(){
+    //revisar si hay alguna interrupcion pendiente por atender. Como tratamos las interrupciones?
  }
 
 int main(int argc, char* argv[]) {
     t_log* loggerCpu = log_create("Cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
     t_cpu_config* configCpu = cargarCpuConfig(argv[1],loggerCpu);
-    decir_hola("CPU");
+    t_registros* registros = malloc(sizeof(t_registros));
+    registros = iniciarRegistrosCpu(registros);
+    decir_hola("CPU");/*
     //cpu se conecta al servidor memoria 
     int socketMemoria = crear_conexion_cliente(configCpu->IP_MEMORIA, configCpu->PUERTO_MEMORIA);
     handshake_Inicial_CL(socketMemoria);
@@ -69,12 +105,10 @@ int main(int argc, char* argv[]) {
     int socketKernelDispatch = esperar_cliente(socketCpuDispatch, loggerCpu);
     handshake_Inicial_SV(socketKernelDispatch);
     int socketKernelInterrupt = esperar_cliente(socketCpuInterrupt, loggerCpu);
-    handshake_Inicial_SV(socketKernelInterrupt);
+    handshake_Inicial_SV(socketKernelInterrupt);*/
     
 
     return 0;
-
-
 }    
     
 
