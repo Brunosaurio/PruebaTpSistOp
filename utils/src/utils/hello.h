@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <string.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "mensajes.h"
 #include "stream.h"
 #include <commons/collections/list.h>
@@ -42,21 +43,34 @@ typedef struct t_contexto {
 
 typedef struct t_pcb {
     uint32_t pid;
-    uint32_t tamanio;
-    t_buffer* instrucciones;
     uint32_t programCounter;
-    
-    time_t tiempoDellegadaAReady;
-    
-    uint32_t tiempoDeBloqueo;
-    uint32_t tiempoEjecutado;
-    
-    t_registros registros_CPU;
-
+    t_registros* registros_CPU;
+    uint8_t quantum;
     uint8_t estado;
-    t_list* tablaDeArchivosAbiertos;
 }t_pcb;
 
+typedef enum{
+	NEW,//=0
+	READY,//=1
+	EXEC,//=2
+	BLOCKED,//=3
+	EXIT//=4
+}est_pcb;
+
+struct t_kernel_config {
+    char* IP_MEMORIA;
+    char* PUERTO_MEMORIA;
+    char* PUERTO_ESCUCHA;
+    char* IP_CPU;
+    char* PUERTO_CPU_DISPATCH;
+    char* PUERTO_CPU_INTERRUPT;
+    char* ALGORITMO_PLANIFICACION;
+    int GRADO_MULTIPROGRAMACION;
+    int QUANTUM;
+
+    int SOCKET_CPU;
+    int SOCKET_MEMORIA;
+}typedef t_kernel_config;
 /**
 * @fn    decir_hola
 * @brief Imprime un saludo al nombre que se pase por parámetro por consola.

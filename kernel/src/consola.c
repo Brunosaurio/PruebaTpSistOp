@@ -1,12 +1,15 @@
 #include "consola.h"
 
+extern sem_t semProcesosEnNew;
 
 extern t_log* loggerKernel;
 extern t_kernel_config* configKernel;
 
 void f_iniciar_proceso(char* path){
+    bool procesoCreado = false;
     int pid = obtener_siguiente_pid();
 
+    procesoCreado = iniciar_proceso_en_kernel(pid);
     //avisar a memoria [int pid][char* path][int size]
     t_buffer* a_enviar = buffer_crear();
     //cargar_int_al_buffer(a_enviar,pid);
@@ -15,6 +18,9 @@ void f_iniciar_proceso(char* path){
     
     log_info(loggerKernel, "%s", path);
     stream_enviar_buffer(configKernel->SOCKET_MEMORIA, PROCESO_NUEVO, a_enviar);
+    buffer_destruir(a_enviar);
+
+    sem_post(&semProcesosEnNew);
 }
 
 void atender_instruccion_validada(char* leido){
@@ -41,9 +47,7 @@ void atender_instruccion_validada(char* leido){
     
     }else if (strcmp (comando_consola[0], "PROCESO_ESTADO")==0){
     
-    }else if (strcmp (comando_consola[0], "HELP") == 0){
-    
-    }else if (strcmp (comando_consola[0], "PRINT") == 0){
+    }else if (strcmp (comando_consola[0], "EJECUTAR_SCRIPT") == 0){
     
     }else{
         log_error(loggerKernel, "Comando no reconocido, pero paso el filtro");
@@ -71,9 +75,7 @@ bool validacion_de_instruccion_de_consola(char* leido){
         resultado_validacion = true; 
     }else if (strcmp (comando_consola[0], "PROCESO_ESTADO")==0){
         resultado_validacion = true; 
-    }else if (strcmp (comando_consola[0], "HELP") == 0){
-        resultado_validacion = true; 
-    }else if (strcmp (comando_consola[0], "PRINT") == 0){
+    }else if (strcmp (comando_consola[0], "EJECUTAR_SCRIPT") == 0){
         resultado_validacion = true; 
     }else{
         resultado_validacion = false; 

@@ -49,9 +49,9 @@ void atender_proceso_nuevo(){
 	
 	nuevoProceso->pid = pid;
 	nuevoProceso->instrucciones = instrucciones;
-	//Agregamos el proceso a los procesos Activos en la memoria. CUIDADO, LAS INSTRUCCIONES HAY Q HACER LE GET AL REVEZ
+	//Agregamos el proceso a los procesos Activos en la memoria. CUIDADO, LAS INSTRUCCIONES HAY Q HACERLE GET AL REVEZ
 	list_add(procesosEnMemoria,nuevoProceso);
-	
+	buffer_destruir(buffer);
 
 }
 void procesar_conexiones_memoria(){
@@ -111,10 +111,8 @@ void conexion_kernel_memoria()
 				log_info(loggerMemoria, "Recibido el codigo de operacion: %d no reconocido", cop);
 				break;
 		}
-		break;
 	}
-
-} 
+}
 
 int serverMemoria_escuchar_kernel(int server_socket, t_log* logger) {
 	int cliente_socket = esperar_cliente(server_socket, logger);
@@ -122,7 +120,7 @@ int serverMemoria_escuchar_kernel(int server_socket, t_log* logger) {
 	if (cliente_socket != -1) {
 		pthread_t hilo;
 		pthread_create(&hilo, NULL, (void*) conexion_kernel_memoria, NULL);
-		pthread_detach(hilo);
+		pthread_join(hilo);
 		return 1;
 	}
 	return 0;

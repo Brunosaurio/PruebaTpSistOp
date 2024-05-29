@@ -17,5 +17,6 @@ typedef enum{
 	F_WRITE,
 	EXIT_P,
 
-	PROCESO_NUEVO
+	PROCESO_NUEVO,
+	CONF_PR_NUEVO
 }cod_operacion;

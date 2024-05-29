@@ -5,8 +5,39 @@
 #include <commons/log.h>
 #include <utils/hello.h>
 
+extern sem_t semProcesosEnNew;
+extern int contadorMultiprogramacion;
+
 t_log* loggerKernel;
 t_kernel_config* configKernel;
+
+t_list* pcbEnExec;
+t_list* procesosEnNew;
+t_list* procesosEnReady;
+t_list* procesosEnBloq;
+t_list* procesosEnExit;
+
+
+void iniciar_semaforos(){
+    sem_init(&semProcesosEnNew,0,0);
+    
+}
+
+void iniciar_listas(){
+    pcbEnExec = list_create();
+    procesosEnNew = list_create();
+    procesosEnBloq = list_create();
+    procesosEnReady = list_create();
+    procesosEnExit = list_create();
+}
+
+void iniciar_estructuras(){
+    iniciar_listas();
+    iniciar_semaforos();
+    contadorMultiprogramacion = 0;
+}
+
+
 
 t_kernel_config* cargarKernelConfig(char* path,t_log* logger){
     t_config* tempCfg = config_create(path);
@@ -41,6 +72,7 @@ t_kernel_config* cargarKernelConfig(char* path,t_log* logger){
 int main(int argc, char* argv[]) {
     loggerKernel = log_create("kernel.log", "KERNEL", 1, LOG_LEVEL_DEBUG);
     configKernel = cargarKernelConfig(argv[1],loggerKernel);
+    iniciar_estructuras();
     decir_hola("KERNEL");
     
     //kernel se conecta al servidor memoria

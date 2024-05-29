@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
 
     t_proceso_en_memoria* unProceso = list_get(procesosEnMemoria,0);
     log_info(loggerMemoria,"El proceso obtenido tiene pid: %d", unProceso->pid);
-    log_info(loggerMemoria, "Su primera Instruccion es: %s", list_get(unProceso->instrucciones, 0));
+    log_info(loggerMemoria, "Su primera Instruccion es: %s", (char*) list_get(unProceso->instrucciones, 0));
 
     /*------------Prueba que demuestra los dispositivos conectados
     int tamanioLista = list_size(interfacesConectadas);
