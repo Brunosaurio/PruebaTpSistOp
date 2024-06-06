@@ -47,6 +47,7 @@ typedef struct t_pcb {
     t_registros* registros_CPU;
     uint8_t quantum;
     uint8_t estado;
+    char* pathInstrucciones;
 }t_pcb;
 
 typedef enum{

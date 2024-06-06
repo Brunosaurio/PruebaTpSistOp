@@ -5,23 +5,6 @@ extern sem_t semProcesosEnNew;
 extern t_log* loggerKernel;
 extern t_kernel_config* configKernel;
 
-void f_iniciar_proceso(char* path){
-    bool procesoCreado = false;
-    int pid = obtener_siguiente_pid();
-
-    procesoCreado = iniciar_proceso_en_kernel(pid);
-    //avisar a memoria [int pid][char* path][int size]
-    t_buffer* a_enviar = buffer_crear();
-    //cargar_int_al_buffer(a_enviar,pid);
-    buffer_empaquetar(a_enviar, &pid, sizeof(int));
-    buffer_empaquetar_string(a_enviar, path);
-    
-    log_info(loggerKernel, "%s", path);
-    stream_enviar_buffer(configKernel->SOCKET_MEMORIA, PROCESO_NUEVO, a_enviar);
-    buffer_destruir(a_enviar);
-
-    sem_post(&semProcesosEnNew);
-}
 
 void atender_instruccion_validada(char* leido){
     char** comando_consola = string_split(leido, " ");
@@ -29,7 +12,8 @@ void atender_instruccion_validada(char* leido){
     //t_buffer* un_buffer = crear_buffer();
 
     if (strcmp(comando_consola[0],"INICIAR_PROCESO") == 0){ //[PATH]
-        f_iniciar_proceso(comando_consola[1]);
+        iniciar_proceso_en_kernel(comando_consola[1]);
+        //f_iniciar_proceso(comando_consola[1]);
         /*cargar_string_al_buffer(un_buffer, comando_consola[1]);//[path]
         cargar_string_al_buffer(un_buffer, comando_consola[2]);//[size]
         cargar_string_al_buffer(un_buffer, comando_consola[3]);//[prioridad]

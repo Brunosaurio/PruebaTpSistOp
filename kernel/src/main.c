@@ -5,8 +5,15 @@
 #include <commons/log.h>
 #include <utils/hello.h>
 
-extern sem_t semProcesosEnNew;
-extern int contadorMultiprogramacion;
+extern pthread_mutex_t mutex_New;
+extern pthread_mutex_t mutex_Ready;
+
+extern sem_t semProcesoEnNew;
+extern sem_t semProcesoEnReady;
+extern sem_t semPcbEnExec;
+extern sem_t semGradoMultiprogramacion;
+extern sem_t dispatchPermitido;
+
 
 t_log* loggerKernel;
 t_kernel_config* configKernel;
@@ -19,7 +26,16 @@ t_list* procesosEnExit;
 
 
 void iniciar_semaforos(){
-    sem_init(&semProcesosEnNew,0,0);
+    sem_init(&semProcesoEnNew,0,0);
+    sem_init(&semProcesoEnReady,0,0);
+    sem_init(&semPcbEnExec,0,0);
+    sem_init(&dispatchPermitido,0,1);
+    sem_init(&semGradoMultiprogramacion,0,configKernel->GRADO_MULTIPROGRAMACION);
+
+
+
+    pthread_mutex_init(&mutex_New,NULL);
+    pthread_mutex_init(&mutex_Ready,NULL);
     
 }
 
@@ -34,7 +50,7 @@ void iniciar_listas(){
 void iniciar_estructuras(){
     iniciar_listas();
     iniciar_semaforos();
-    contadorMultiprogramacion = 0;
+    
 }
 
 
