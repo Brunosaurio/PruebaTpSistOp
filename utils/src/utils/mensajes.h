@@ -37,6 +37,7 @@ t_buffer* buffer_crear_copia(t_buffer*);
 void buffer_destruir(t_buffer* self);
 void buffer_empaquetar(t_buffer* self, void* streamToAdd, int size);
 void buffer_empaquetar_string(t_buffer* self, char* string);
+
 void buffer_desempaquetar(t_buffer* self, void* dest, int size);
 void buffer_desempaquetar_string(t_buffer* self, char** pString);
 void handshake_Inicial_SV(int socketCliente);

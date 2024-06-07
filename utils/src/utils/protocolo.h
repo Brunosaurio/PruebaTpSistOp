@@ -18,5 +18,6 @@ typedef enum{
 	EXIT_P,
 
 	PROCESO_NUEVO,
-	CONF_PR_NUEVO
+	CONF_PR_NUEVO,
+	PROC_A_EJC
 }cod_operacion;

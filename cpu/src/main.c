@@ -5,20 +5,6 @@
 #include <commons/log.h>
 #include "atender_kernel.h"
 
-
-struct cpu_config {
-    
-    char* IP_MEMORIA;
-    char* PUERTO_MEMORIA;
-    char* PUERTO_ESCUCHA_DISPATCH;
-    char* PUERTO_ESCUCHA_INTERRUPT;
-    int CANTIDAD_ENTRADAS_TLB;
-    char* ALGORITMO_TLB;
-
-    int SOCKET_MEMORIA;
-    int SOCKET_KERNEL;
-}typedef t_cpu_config;
-
 t_log* cpuLogger;
 t_cpu_config* cpuConfig;
 
@@ -81,32 +67,39 @@ void ejecutar_instruccion(){
  }
 
 int main(int argc, char* argv[]) {
-    t_log* loggerCpu = log_create("Cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
-    t_cpu_config* configCpu = cargarCpuConfig(argv[1],loggerCpu);
+    cpuLogger = log_create("Cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
+    cpuConfig = cargarCpuConfig(argv[1],cpuLogger);
     t_registros* registros = malloc(sizeof(t_registros));
     registros = iniciarRegistrosCpu(registros);
     decir_hola("CPU");/*
-    //cpu se conecta al servidor memoria 
+    //cpu se conecta al servidor memoria
     int socketMemoria = crear_conexion_cliente(configCpu->IP_MEMORIA, configCpu->PUERTO_MEMORIA);
     handshake_Inicial_CL(socketMemoria);
-     
-    //arranca servidor cpu al que se nos va a conectar kernel 
-    log_info(loggerCpu, "Iniciando Servidor CPU...");
-    int socketCpuDispatch = crear_conexion_servidor(configCpu->PUERTO_ESCUCHA_DISPATCH);
+    */
+    //Arranca servidor cpu al que se nos va a conectar kernel 
+    log_info(cpuLogger, "Iniciando Servidor CPU...");
     
-    int socketCpuInterrupt = crear_conexion_servidor(configCpu->PUERTO_ESCUCHA_INTERRUPT);
+    int socketCpuDispatch = crear_conexion_servidor(cpuConfig->PUERTO_ESCUCHA_DISPATCH);
+    int socketCpuInterrupt = crear_conexion_servidor(cpuConfig->PUERTO_ESCUCHA_INTERRUPT);
     
     if (socketCpuDispatch < 0 || socketCpuInterrupt < 0){
-        log_error(loggerCpu, "Error intentando iniciar Servidor CPU.");
-        log_destroy(loggerCpu);    
+        log_error(cpuLogger, "Error intentando iniciar Servidor CPU.");
+        log_destroy(cpuLogger);    
         exit(-1); 
     }
-    else log_info(loggerCpu, "CPU listo para recibir al KERNEL en conexiones Dispatch e Interrupt");
-    int socketKernelDispatch = esperar_cliente(socketCpuDispatch, loggerCpu);
-    handshake_Inicial_SV(socketKernelDispatch);
-    int socketKernelInterrupt = esperar_cliente(socketCpuInterrupt, loggerCpu);
-    handshake_Inicial_SV(socketKernelInterrupt);*/
+    else log_info(cpuLogger, "CPU listo para recibir al KERNEL en conexiones Dispatch e Interrupt");
     
+    //Hacemos handshake
+    int socketKernelDispatch = esperar_cliente(socketCpuDispatch, cpuLogger);
+    handshake_Inicial_SV(socketKernelDispatch);
+    int socketKernelInterrupt = esperar_cliente(socketCpuInterrupt, cpuLogger);
+    handshake_Inicial_SV(socketKernelInterrupt);
+    
+    //Esperamos las peticiones del Kernel
+
+    atender_peticiones_kernel();
+
+
 
     return 0;
 }    

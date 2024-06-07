@@ -37,18 +37,8 @@ typedef struct t_registros{
 typedef struct t_contexto {
     uint32_t pid;
     uint32_t programCounter;
-    t_list* instrucciones;
-    t_registros registrosDeCPU;
+    t_registros* registrosDeCPU;
 }t_contexto;
-
-typedef struct t_pcb {
-    uint32_t pid;
-    uint32_t programCounter;
-    t_registros* registros_CPU;
-    uint8_t quantum;
-    uint8_t estado;
-    char* pathInstrucciones;
-}t_pcb;
 
 typedef enum{
 	NEW,//=0
@@ -57,6 +47,17 @@ typedef enum{
 	BLOCKED,//=3
 	EXIT//=4
 }est_pcb;
+
+typedef struct t_pcb {
+    uint32_t pid;
+    uint32_t programCounter;
+    t_registros* registros_CPU;
+    uint8_t quantum;
+    est_pcb estado;
+    char* pathInstrucciones;
+}t_pcb;
+
+
 
 struct t_kernel_config {
     char* IP_MEMORIA;
@@ -72,6 +73,20 @@ struct t_kernel_config {
     int SOCKET_CPU;
     int SOCKET_MEMORIA;
 }typedef t_kernel_config;
+
+struct cpu_config {
+    
+    char* IP_MEMORIA;
+    char* PUERTO_MEMORIA;
+    char* PUERTO_ESCUCHA_DISPATCH;
+    char* PUERTO_ESCUCHA_INTERRUPT;
+    int CANTIDAD_ENTRADAS_TLB;
+    char* ALGORITMO_TLB;
+
+    int SOCKET_MEMORIA;
+    int SOCKET_KERNEL;
+}typedef t_cpu_config;
+
 /**
 * @fn    decir_hola
 * @brief Imprime un saludo al nombre que se pase por parámetro por consola.
@@ -81,5 +96,6 @@ void decir_hola(char* quien);
 int crear_conexion_servidor(char* puerto);
 int esperar_cliente(int socket_servidor, t_log* logger);
 int crear_conexion_cliente(char *ip, char* puerto);
-
+void buffer_desempaquetar_registros(t_buffer* buffer, t_registros* regs);
+void contexto_destruir(t_contexto* contexto);
 #endif
