@@ -7,6 +7,7 @@
 
 extern pthread_mutex_t mutex_New;
 extern pthread_mutex_t mutex_Ready;
+extern pthread_mutex_t mutex_Ex;
 
 extern sem_t semProcesoEnNew;
 extern sem_t semProcesoEnReady;
@@ -24,6 +25,13 @@ t_list* procesosEnReady;
 t_list* procesosEnBloq;
 t_list* procesosEnExit;
 
+void iniciar_planificadores(){
+    pthread_t planificador_LP;
+    pthread_create(&planificador_LP,NULL, (void*)planificador_largo_plazo,NULL);
+    pthread_detach(planificador_LP);
+
+
+}
 
 void iniciar_semaforos(){
     sem_init(&semProcesoEnNew,0,0);
@@ -36,6 +44,8 @@ void iniciar_semaforos(){
 
     pthread_mutex_init(&mutex_New,NULL);
     pthread_mutex_init(&mutex_Ready,NULL);
+    pthread_mutex_init(&mutex_Ex,NULL);
+
     
 }
 
@@ -97,13 +107,13 @@ int main(int argc, char* argv[]) {
     configKernel->SOCKET_MEMORIA = socketKernelMemoria;
     
     
-    /*//kernel se conecta al servidor cpu
+    //kernel se conecta al servidor cpu
     int socketCpuDispatch = crear_conexion_cliente(configKernel->IP_CPU, configKernel->PUERTO_CPU_DISPATCH);
     handshake_Inicial_CL(socketCpuDispatch);
     int socketCpuInterrupt = crear_conexion_cliente(configKernel->IP_CPU, configKernel->PUERTO_CPU_INTERRUPT);
     handshake_Inicial_CL(socketCpuInterrupt);
 
-
+/*
     //arranca servidor KERNEL al que se nos va a conectar EntradaSalida
     int socketKernelSV = crear_conexion_servidor(configKernel->PUERTO_ESCUCHA);
 	  if (socketKernelSV < 0){
@@ -116,7 +126,9 @@ int main(int argc, char* argv[]) {
     int socketEntradaSalida = esperar_cliente(socketKernelSV, loggerKernel);
     handshake_Inicial_SV(socketEntradaSalida);
     */
+
     //iniciar consola interactiva 
+    iniciar_planificadores();
     iniciar_consola_interactiva();
     //pthread_ hilo_consola;
     //pthread_create(&hilo_consola.NULL, (void*)iniciar_consola_interactiva,NULL);

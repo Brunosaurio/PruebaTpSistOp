@@ -1,6 +1,7 @@
 #include "atender_peticiones.h"
 
 t_log* loggerMemoria;
+t_memoria_config* configMemoria;
 t_list* interfacesConectadas;
 t_list* procesosEnMemoria;
 int socketKernel;
@@ -42,7 +43,7 @@ void atender_proceso_nuevo(){
 	buffer_desempaquetar(buffer, &pid, sizeof(int));
 	buffer_desempaquetar_string(buffer, &pathInstrucciones);
 
-	log_info(loggerMemoria, "Llego la intencion de crear al proceso %d, con la ruta de pseudocodigo %s", pid, pathInstrucciones);
+	log_info(loggerMemoria, "Creando estructuras del <%d> path <%s>", pid, pathInstrucciones);
 	
 	//Procesamos instrucciones
 	instrucciones = leer_archivo_y_cargar_instrucciones(instrucciones, pathInstrucciones);
@@ -52,7 +53,9 @@ void atender_proceso_nuevo(){
 	//Agregamos el proceso a los procesos Activos en la memoria. CUIDADO, LAS INSTRUCCIONES HAY Q HACERLE GET AL REVEZ
 	list_add(procesosEnMemoria,nuevoProceso);
 	buffer_destruir(buffer);
-
+	//Devolvemos la confirmacion del proceso nuevo creado
+	//sleep(configMemoria->retardoRespuesta);
+	stream_enviar_buffer_vacio(socketKernel, CONF_PR_NUEVO);
 }
 void procesar_conexiones_memoria(){
 	log_info(loggerMemoria, "Estoy corriendo");
@@ -120,7 +123,7 @@ int serverMemoria_escuchar_kernel(int server_socket, t_log* logger) {
 	if (cliente_socket != -1) {
 		pthread_t hilo;
 		pthread_create(&hilo, NULL, (void*) conexion_kernel_memoria, NULL);
-		pthread_join(hilo);
+		pthread_join(hilo, NULL);
 		return 1;
 	}
 	return 0;

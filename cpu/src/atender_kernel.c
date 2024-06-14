@@ -39,9 +39,10 @@ void prueba_mostrar_contexto(t_contexto* contexto){
 void atender_peticiones_kernel(){
 	uint32_t pidRecibido = 0;
     uint32_t programCounter = 0;
+    log_info(cpuLogger, "Esperando Operacion de Kernel");
 
     while(1) {
-        uint8_t kernelRespuesta = stream_recibir_header(cpuConfig->SOCKET_KERNEL);
+        uint8_t kernelRespuesta = stream_recibir_header(cpuConfig->SOCKET_KERNEL_DISPATCH);
         t_buffer* bufferContexto = NULL;
         t_contexto* contexto = NULL;
         if (kernelRespuesta != PROC_A_EJC) {
@@ -49,7 +50,7 @@ void atender_peticiones_kernel(){
             exit(-1);
         }
             bufferContexto = buffer_crear();
-            stream_recibir_buffer(cpuConfig->SOCKET_KERNEL, bufferContexto);
+            stream_recibir_buffer(cpuConfig->SOCKET_KERNEL_DISPATCH, bufferContexto);
             buffer_desempaquetar(bufferContexto, &pidRecibido, sizeof(pidRecibido));
             buffer_desempaquetar(bufferContexto, &programCounter, sizeof(programCounter));
             

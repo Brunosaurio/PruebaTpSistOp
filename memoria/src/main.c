@@ -5,16 +5,10 @@
 #include "procesoEnMemoria.h"
 
 extern t_log* loggerMemoria;
+extern t_memoria_config* configMemoria;
 extern t_list* interfacesConectadas;
 extern t_list* procesosEnMemoria;
 extern int socketKernel;
-struct memoria_config {
-    char* puertoEscucha;
-    int tamMemoria;
-    int tamPagina;
-    char* pathInstrucciones;
-    int retardoRespuesta;
-}typedef t_memoria_config;
 
 t_memoria_config* cargarMemoriaConfig(char* path, t_log* logger) {
     t_config* tempCfg = config_create(path);
@@ -48,7 +42,7 @@ int main(int argc, char* argv[]) {
     procesosEnMemoria= list_create();
 
     loggerMemoria = log_create("Memoria.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
-    t_memoria_config* configMemoria = cargarMemoriaConfig(argv[1],loggerMemoria);
+    configMemoria = cargarMemoriaConfig(argv[1],loggerMemoria);
     //procesar_conexiones_memoria();
     
     decir_hola("Memoria");
@@ -58,12 +52,12 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
     }
     log_info(loggerMemoria, "%d", socketMemoria);
-    /*
+    
     log_info(loggerMemoria, "MEMORIA lista para recibir al CPU");
     int socketCpu = esperar_cliente(socketMemoria, loggerMemoria);
     log_info(loggerMemoria, "%d", socketCpu);
     handshake_Inicial_SV(socketCpu);
-    */
+    
     
     log_info(loggerMemoria, "MEMORIA lista para recibir al KERNEL");
     socketKernel = esperar_cliente(socketMemoria, loggerMemoria);
@@ -77,14 +71,14 @@ int main(int argc, char* argv[]) {
     conexion_kernel_memoria();
 
     //procesosEnMemoria = leer_archivo_y_cargar_instrucciones(procesosEnMemoria,"pseudocodigo.txt"); No sirve
-
+    /*--------------Prueba para comprobar que llegan los procesos
     char* leido; 
     leido = readline("> ");
 
     t_proceso_en_memoria* unProceso = list_get(procesosEnMemoria,0);
     log_info(loggerMemoria,"El proceso obtenido tiene pid: %d", unProceso->pid);
     log_info(loggerMemoria, "Su primera Instruccion es: %s", (char*) list_get(unProceso->instrucciones, 0));
-
+    */
     /*------------Prueba que demuestra los dispositivos conectados
     int tamanioLista = list_size(interfacesConectadas);
     int i = 0;

@@ -71,11 +71,11 @@ int main(int argc, char* argv[]) {
     cpuConfig = cargarCpuConfig(argv[1],cpuLogger);
     t_registros* registros = malloc(sizeof(t_registros));
     registros = iniciarRegistrosCpu(registros);
-    decir_hola("CPU");/*
+    decir_hola("CPU");
     //cpu se conecta al servidor memoria
-    int socketMemoria = crear_conexion_cliente(configCpu->IP_MEMORIA, configCpu->PUERTO_MEMORIA);
+    int socketMemoria = crear_conexion_cliente(cpuConfig->IP_MEMORIA, cpuConfig->PUERTO_MEMORIA);
     handshake_Inicial_CL(socketMemoria);
-    */
+    
     //Arranca servidor cpu al que se nos va a conectar kernel 
     log_info(cpuLogger, "Iniciando Servidor CPU...");
     
@@ -90,10 +90,11 @@ int main(int argc, char* argv[]) {
     else log_info(cpuLogger, "CPU listo para recibir al KERNEL en conexiones Dispatch e Interrupt");
     
     //Hacemos handshake
-    int socketKernelDispatch = esperar_cliente(socketCpuDispatch, cpuLogger);
-    handshake_Inicial_SV(socketKernelDispatch);
-    int socketKernelInterrupt = esperar_cliente(socketCpuInterrupt, cpuLogger);
-    handshake_Inicial_SV(socketKernelInterrupt);
+    cpuConfig->SOCKET_KERNEL_DISPATCH = esperar_cliente(socketCpuDispatch, cpuLogger);
+    handshake_Inicial_SV(cpuConfig->SOCKET_KERNEL_DISPATCH);
+    cpuConfig->SOCKET_KERNEL_INTERRUPT = esperar_cliente(socketCpuInterrupt, cpuLogger);
+    handshake_Inicial_SV(cpuConfig->SOCKET_KERNEL_INTERRUPT);
+    log_info(cpuLogger, "Handshake completado");
     
     //Esperamos las peticiones del Kernel
 

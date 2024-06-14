@@ -84,9 +84,17 @@ struct cpu_config {
     char* ALGORITMO_TLB;
 
     int SOCKET_MEMORIA;
-    int SOCKET_KERNEL;
+    int SOCKET_KERNEL_DISPATCH;
+    int SOCKET_KERNEL_INTERRUPT;
 }typedef t_cpu_config;
 
+struct memoria_config {
+    char* puertoEscucha;
+    int tamMemoria;
+    int tamPagina;
+    char* pathInstrucciones;
+    int retardoRespuesta;
+}typedef t_memoria_config;
 /**
 * @fn    decir_hola
 * @brief Imprime un saludo al nombre que se pase por parámetro por consola.

@@ -6,6 +6,7 @@ pthread_mutex_t mutex_pausa;
 
 pthread_mutex_t mutex_New;
 pthread_mutex_t mutex_Ready;
+pthread_mutex_t mutex_Ex;
 
 sem_t semProcesoEnNew;
 sem_t semProcesoEnReady;
@@ -51,11 +52,12 @@ void iniciar_proceso_en_kernel(char* path){
     procesoNuevo->programCounter=0;
     procesoNuevo->registros_CPU = malloc(sizeof(t_registros));
     procesoNuevo->quantum = 0;
-    procesoNuevo->pathInstrucciones = path;
+    procesoNuevo->pathInstrucciones = strdup(path);
 	
     list_add(procesosEnNew, procesoNuevo);
-	log_info(loggerKernel,"Se crea el proceso <%d> en NEW", pid);
-	sem_post(&semProcesoEnNew);
+	log_info(loggerKernel,"Se crea el proceso <%d> en NEW con el path <%s>", procesoNuevo->pid ,procesoNuevo->pathInstrucciones);
+	
+    sem_post(&semProcesoEnNew);
 }
 
 void iniciar_proceso_en_memoria(t_pcb* unPcb){
@@ -72,28 +74,33 @@ void iniciar_proceso_en_memoria(t_pcb* unPcb){
 }
 
 
-void  planificador_largo_plazo(void) {
+void planificador_largo_plazo(void) {
     /*pthread_t liberarPcbsEnExitHilo;
     pthread_create(&liberarPcbsEnExitHilo, NULL, (void*)finalizar_pcbs_en_hilo_con_exit, NULL);
     pthread_detach(liberarPcbsEnExitHilo);*/
     while(1) {
+        
+        log_info(loggerKernel,"Esperando Proceso En New");
         sem_wait(&semProcesoEnNew);
         sem_wait(&semGradoMultiprogramacion);
+        
         //sem_wait(&controlDeIntercambioDePcbs);
 
         pthread_mutex_lock(&mutex_New);
         t_pcb* pcbQuePasaAReady = list_remove(procesosEnNew, 0);
         pthread_mutex_unlock(&mutex_New);
-        
+                
         pthread_mutex_lock(&mutex_Ready);
         list_add(procesosEnReady, pcbQuePasaAReady);
         pthread_mutex_unlock(&mutex_Ready);
         
-		////// PARTE DE MEMORIA 
+		////// PARTE DE MEMORIA
+        log_info(loggerKernel, "%s", pcbQuePasaAReady->pathInstrucciones);
         iniciar_proceso_en_memoria(pcbQuePasaAReady);
         
 		t_buffer* bufferSegmentoCreado = buffer_crear();
         uint8_t respuestaDeMemoria = stream_recibir_header(configKernel->SOCKET_MEMORIA);
+        log_info(loggerKernel,"Respuesta de memoria :%d", respuestaDeMemoria);
         if (respuestaDeMemoria != CONF_PR_NUEVO) {
             log_error(loggerKernel,"Error al intentar iniciar estructuras del proceso %d",pcbQuePasaAReady->pid);
             exit(-1);
@@ -139,5 +146,41 @@ void planificador_corto_plazo() {
         }
 		list_add(pcbEnExec,pcbToDispatch);
         sem_post(&semPcbEnExec);
+    }
+}
+void atender_pcb() {
+    while(1) {
+        sem_wait(&semPcbEnExec); 
+        
+        pthread_mutex_lock(&mutex_Ex);
+        
+        t_pcb* pcb = list_get(pcbEnExec, 0); // saca el primer pcb de la lista
+        
+        pthread_mutex_unlock(&mutex_Ex);
+        
+        //TENGO QUE ENVIARLE EL CONTEXTO A LA CPU
+        kernel_enviar_pcb_a_cpu(pcb, kernelConfig, kernelLogger, HEADER_proceso_a_ejecutar);
+        
+        uint8_t cpuRespuesta = stream_recibir_header(kernel_config_obtener_socket_cpu(kernelConfig));
+
+        pthread_mutex_lock(estado_obtener_mutex(estadoExec));
+        pcb = kernel_recibir_pcb_actualizado_de_cpu(pcb, cpuRespuesta, kernelConfig, kernelLogger);
+
+        ultimoPcbEjecutado = pcb; // que pcb sigue ejecutando
+        
+        list_remove(estado_obtener_lista(estadoExec), 0); // saca de ejec el proceso
+
+        pthread_mutex_unlock(estado_obtener_mutex(estadoExec));
+
+        uint32_t pidAEnviar = pcb_obtener_pid(pcb);
+        
+        switch (cpuRespuesta) {
+
+            default:
+                log_error(kernelLogger, "Error al recibir mensaje de CPU");
+                exit(-1);
+                break;
+        }
+        sem_post(&dispatchPermitido);
     }
 }
