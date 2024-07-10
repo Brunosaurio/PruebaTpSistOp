@@ -17,6 +17,9 @@ int serverMemoria_escuchar_kernel(int server_socket, t_log* logger);
 void conexion_kernel_memoria();
 
 int serverMemoria_escuchar_cpuDispatch(int server_socket, t_log* logger);
+
+
+void enviar_instruccion_a_Cpu();
 void conexion_cpuDispatch_memoria();
 
 int serverMemoria_escuchar_cpuInterrupt(int server_socket, t_log* logger);

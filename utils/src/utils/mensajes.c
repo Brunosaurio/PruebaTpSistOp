@@ -189,6 +189,34 @@ void buffer_desempaquetar_string(t_buffer* self, char** pString) {
     buffer_desempaquetar(self, *pString, largoString);
 }
 
+void buffer_empaquetar_registros(t_buffer* buffer, t_registros* regs){
+    buffer_empaquetar(buffer, &regs->AX, sizeof(uint8_t));
+    /*buffer_empaquetar(buffer, &regs->BX, sizeof(*regs->BX)));
+    buffer_empaquetar(buffer, &regs->CX, sizeof((regs->CX)));
+    buffer_empaquetar(buffer, &regs->DX, sizeof((regs->DX)));
+    buffer_empaquetar(buffer, &regs->EAX, sizeof((regs->EAX)));
+    buffer_empaquetar(buffer, &regs->EBX, sizeof((regs->EBX)));
+    buffer_empaquetar(buffer, &regs->ECX, sizeof((regs->ECX)));
+    buffer_empaquetar(buffer, &regs->EDX, sizeof((regs->EDX)));
+    buffer_empaquetar(buffer, &regs->SI, sizeof((regs->SI)));
+    buffer_empaquetar(buffer, &regs->DI, sizeof((regs->DI)));
+    buffer_empaquetar(buffer, &regs->PC, sizeof((regs->PC)));*/
+}
+
+void buffer_desempaquetar_registros(t_buffer* buffer, t_registros* regs){
+    buffer_desempaquetar(buffer, &regs->AX, sizeof(uint8_t));
+    /*buffer_desempaquetar(buffer, regs->BX, sizeof((regs->BX)));
+    buffer_desempaquetar(buffer, regs->CX, sizeof((regs->CX)));
+    buffer_desempaquetar(buffer, regs->DX, sizeof((regs->DX)));
+    buffer_desempaquetar(buffer, regs->EAX, sizeof((regs->EAX)));
+    buffer_desempaquetar(buffer, regs->EBX, sizeof((regs->EBX)));
+    buffer_desempaquetar(buffer, regs->ECX, sizeof((regs->ECX)));
+    buffer_desempaquetar(buffer, regs->EDX, sizeof((regs->EDX)));
+    buffer_desempaquetar(buffer, regs->SI, sizeof((regs->SI)));
+    buffer_desempaquetar(buffer, regs->DI, sizeof((regs->DI)));
+    buffer_desempaquetar(buffer, regs->PC, sizeof((regs->PC)));*/
+}
+
 void handshake_Inicial_SV(int socketCliente){
     size_t bytes;
 

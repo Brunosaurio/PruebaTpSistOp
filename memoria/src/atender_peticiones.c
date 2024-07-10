@@ -5,6 +5,7 @@ t_memoria_config* configMemoria;
 t_list* interfacesConectadas;
 t_list* procesosEnMemoria;
 int socketKernel;
+int socketCpu;
 
 ///////////////////////Hilos
 void* escuchar_conexiones_IO(int* socketMemoria){
@@ -130,11 +131,32 @@ int serverMemoria_escuchar_kernel(int server_socket, t_log* logger) {
 
 }
 
+void enviar_instruccion_a_Cpu(){
+	int pid = 0;
+    int programCounter = 0;
+
+	t_buffer* datosDeBusqueda = buffer_crear();
+	stream_recibir_buffer(configMemoria->SOCKET_CPU, datosDeBusqueda);
+	buffer_desempaquetar(datosDeBusqueda,&pid, sizeof(int));
+	buffer_desempaquetar(datosDeBusqueda,&programCounter,sizeof(int));
+	log_info(loggerMemoria, "Recibido fetch de instruccion %d, del proceso %d", programCounter,pid);
+	exit(-1);
+}
+
 void conexion_cpuDispatch_memoria()
 {
 	log_info(loggerMemoria, "Estoy corriendo");
-
-
+	while(1){
+		cod_operacion cop = stream_recibir_header(configMemoria->SOCKET_CPU);
+		switch(cop){
+			case HEADER_CPU_FETCH:
+				enviar_instruccion_a_Cpu();
+				break;
+			default:
+				log_info(loggerMemoria, "Recibido el codigo de operacion: %d no reconocido", cop);
+				break;
+		}
+	}
 } 
 
 int serverMemoria_escuchar_cpuDispatch(int server_socket, t_log* logger) {
@@ -149,25 +171,7 @@ int serverMemoria_escuchar_cpuDispatch(int server_socket, t_log* logger) {
 	return 0;
 
 }
-void conexion_cpuInterrupt_memoria()
-{
-	log_info(loggerMemoria, "Estoy corriendo");
 
-
-} 
-
-int serverMemoria_escuchar_cpuInterrupt(int server_socket, t_log* logger) {
-	int cliente_socket = esperar_cliente(server_socket, logger);
-	//log_info(logger, "Hola %d", cliente_socket);
-	if (cliente_socket != -1) {
-		pthread_t hilo;
-		pthread_create(&hilo, NULL, (void*) conexion_cpuInterrupt_memoria, NULL);
-		pthread_detach(hilo);
-		return 1;
-	}
-	return 0;
-
-}
 
 
 

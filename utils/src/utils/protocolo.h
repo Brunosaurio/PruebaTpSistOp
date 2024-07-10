@@ -19,5 +19,7 @@ typedef enum{
 
 	PROCESO_NUEVO,
 	CONF_PR_NUEVO,
-	PROC_A_EJC
+	HEADER_proceso_a_ejecutar,
+	HEADER_proceso_terminado,
+	HEADER_CPU_FETCH
 }cod_operacion;

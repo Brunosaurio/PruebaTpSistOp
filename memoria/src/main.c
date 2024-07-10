@@ -9,6 +9,7 @@ extern t_memoria_config* configMemoria;
 extern t_list* interfacesConectadas;
 extern t_list* procesosEnMemoria;
 extern int socketKernel;
+extern int socketCpu;
 
 t_memoria_config* cargarMemoriaConfig(char* path, t_log* logger) {
     t_config* tempCfg = config_create(path);
@@ -22,6 +23,9 @@ t_memoria_config* cargarMemoriaConfig(char* path, t_log* logger) {
     memoriaConfig->tamPagina = config_get_int_value(tempCfg, "TAM_PAGINA");
     memoriaConfig->pathInstrucciones = strdup(config_get_string_value(tempCfg, "PATH_INSTRUCCIONES"));
     memoriaConfig->retardoRespuesta = config_get_int_value(tempCfg, "RETARDO_RESPUESTA");
+    
+    memoriaConfig->SOCKET_CPU = -1;
+    memoriaConfig->SOCKET_KERNEL = -1;
     log_info(logger,"Carga de config completa");
     return memoriaConfig;
 }
@@ -35,7 +39,11 @@ void crearHilo_EscucharNuevasIO(int socketSv){
 	pthread_create(&escucharIO, NULL, (void*) escuchar_conexiones_IO, (int*)socketSv);
 	pthread_detach(escucharIO);
 }
-
+void hilo_escuchaCpu(int socketSv){
+    pthread_t escucharCPU;
+	pthread_create(&escucharCPU, NULL, (void*) conexion_cpuDispatch_memoria, (int*)socketSv);
+	pthread_detach(escucharCPU);
+}
 
 int main(int argc, char* argv[]) {
     interfacesConectadas = list_create();
@@ -54,20 +62,22 @@ int main(int argc, char* argv[]) {
     log_info(loggerMemoria, "%d", socketMemoria);
     
     log_info(loggerMemoria, "MEMORIA lista para recibir al CPU");
-    int socketCpu = esperar_cliente(socketMemoria, loggerMemoria);
+    socketCpu = esperar_cliente(socketMemoria, loggerMemoria);
     log_info(loggerMemoria, "%d", socketCpu);
     handshake_Inicial_SV(socketCpu);
-    
+    configMemoria->SOCKET_CPU = socketCpu;
     
     log_info(loggerMemoria, "MEMORIA lista para recibir al KERNEL");
     socketKernel = esperar_cliente(socketMemoria, loggerMemoria);
     handshake_Inicial_SV(socketKernel);
+    configMemoria->SOCKET_KERNEL = socketKernel;
     log_info(loggerMemoria, "%d", socketKernel);
     
     //log_info(loggerMemoria, "MEMORIA lista para recibir entredaSalida");
 
     //crearHilo_EscucharNuevasIO(socketMemoria);
     
+    hilo_escuchaCpu(socketMemoria);
     conexion_kernel_memoria();
 
     //procesosEnMemoria = leer_archivo_y_cargar_instrucciones(procesosEnMemoria,"pseudocodigo.txt"); No sirve

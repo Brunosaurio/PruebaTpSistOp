@@ -23,7 +23,11 @@ t_cpu_config* cargarCpuConfig(char* path, t_log* logger) {
     cpuConfig->PUERTO_ESCUCHA_INTERRUPT = config_get_string_value(tempCfg, "PUERTO_ESCUCHA_INTERRUPT");
     cpuConfig->CANTIDAD_ENTRADAS_TLB = config_get_int_value(tempCfg, "CANTIDAD_ENTRADAS_TLB");
     cpuConfig->ALGORITMO_TLB = config_get_string_value(tempCfg, "ALGORITMO_TLB");
-   
+    
+    cpuConfig->SOCKET_MEMORIA=-1;
+    cpuConfig->SOCKET_KERNEL_DISPATCH=-1;
+    cpuConfig->SOCKET_KERNEL_INTERRUPT=-1;
+
 
 log_info(logger,"Carga de config completa");
  return cpuConfig;
@@ -44,27 +48,6 @@ t_registros* iniciarRegistrosCpu(t_registros* registros){
     return registros;
 }
 //Esto se debe hacer cada vez que se reciba 
-void cpu_ejecutar_ciclo_de_instruccion() {
-    rastrear_instruccion(); //fetch
-    decodificar_instruccion(); //decode
-    ejecutar_instruccion(); //execute
-    check_interrupt();
-}
-
-void rastrear_instruccion(){
-    //Tengo que pedir una instruccion a Memoria
-}
-
-void decodificar_instruccion(){
-    //recibo alguna estructura que contenga todos los datos necesarios de la instruccion
-}
-
-void ejecutar_instruccion(){
-    //Modifico lo que sea que daba modificar
-}
- void check_interrupt(){
-    //revisar si hay alguna interrupcion pendiente por atender. Como tratamos las interrupciones?
- }
 
 int main(int argc, char* argv[]) {
     cpuLogger = log_create("Cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
@@ -75,7 +58,8 @@ int main(int argc, char* argv[]) {
     //cpu se conecta al servidor memoria
     int socketMemoria = crear_conexion_cliente(cpuConfig->IP_MEMORIA, cpuConfig->PUERTO_MEMORIA);
     handshake_Inicial_CL(socketMemoria);
-    
+    cpuConfig->SOCKET_MEMORIA = socketMemoria;
+
     //Arranca servidor cpu al que se nos va a conectar kernel 
     log_info(cpuLogger, "Iniciando Servidor CPU...");
     

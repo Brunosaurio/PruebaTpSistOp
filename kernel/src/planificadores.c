@@ -120,10 +120,9 @@ void planificador_largo_plazo(void) {
 /////////Planificador Corto plazo
 
 void planificador_corto_plazo() {
-    /*pthread_t atenderPCBHilo;
-
+    pthread_t atenderPCBHilo;
     pthread_create(&atenderPCBHilo, NULL, (void*)atender_pcb, NULL);
-    pthread_detach(atenderPCBHilo);*/
+    pthread_detach(atenderPCBHilo);
 
     while(1) {
         t_pcb* pcbToDispatch;
@@ -140,7 +139,9 @@ void planificador_corto_plazo() {
     		pcbToDispatch = (t_pcb*) list_remove(procesosEnReady,0);
     		pthread_mutex_unlock(&mutex_Ready);
 
+
         }else{
+            log_info(loggerKernel, "No se reconoce el algoritmo de planificacion");
 			//otro algoritmo
             //pcbToDispatch = iniciar_HRRN(estadoReady, kernel_config_obtener_hrrn_alfa(kernelConfig));
         }
@@ -148,36 +149,75 @@ void planificador_corto_plazo() {
         sem_post(&semPcbEnExec);
     }
 }
+
+void kernel_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, t_kernel_config* kernelConfig, t_log* kernelLogger, uint8_t header) {
+    uint32_t pidAEnviar = pcbAEnviar->pid;
+    uint32_t pcAEnviar = pcbAEnviar->programCounter;
+
+    t_buffer* bufferPcbAEjecutar = buffer_crear();
+    
+    buffer_empaquetar(bufferPcbAEjecutar, &pidAEnviar, sizeof(pidAEnviar));
+    buffer_empaquetar(bufferPcbAEjecutar, &pcAEnviar, sizeof(pcAEnviar));
+    //buffer_empaquetar_registros(bufferPcbAEjecutar, pcbAEnviar->registros_CPU);
+    log_info(kernelLogger, "Enviando contexto a CPU del proceso %d, header %d, socket %d", pidAEnviar, header, kernelConfig->SOCKET_CPU_DISPATCH);
+    stream_enviar_buffer(kernelConfig->SOCKET_CPU_DISPATCH, header, bufferPcbAEjecutar);
+
+    buffer_destruir(bufferPcbAEjecutar);
+}
+
+t_pcb* kernel_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t cpuResponse, t_kernel_config* kernelConfig, t_log* kernelLogger) {
+    uint32_t pidRecibido = 0;
+    uint32_t programCounterActualizado = 0;
+
+    t_buffer* bufferPcb = buffer_crear();
+    stream_recibir_buffer(kernelConfig->SOCKET_CPU_DISPATCH, bufferPcb);
+    buffer_desempaquetar(bufferPcb, &pidRecibido, sizeof(pidRecibido));
+    buffer_desempaquetar(bufferPcb, &programCounterActualizado, sizeof(programCounterActualizado));
+    //buffer_desempaquetar_registros(bufferPcb, pcbAActualizar->registros_CPU);
+    /*
+    if (pidRecibido == pcb_obtener_pid(pcbAActualizar)) { /// si es el mismo al que tenes en kernel
+        if (cpuResponse == HEADER_proceso_bloqueado) {
+            buffer_desempaquetar(bufferPcb, &tiempoDeBloqActualizado, sizeof(tiempoDeBloqActualizado)); // desempaqueta tiempo que se bloqueo
+            pcb_setear_tiempo_bloqueo(pcbAActualizar, tiempoDeBloqActualizado);
+            // solo para instruccion de io
+        } // cpu le devuelve a kernel el contexto y el tiempo (nro al lado de IO o parametro) que se va a bloquear el proceso
+        
+        pcb_setear_program_counter(pcbAActualizar, programCounterActualizado);
+    } else {
+        log_error(kernelLogger, "Error al recibir PCB de CPU");
+        exit(-1);
+    }*/
+    buffer_destruir(bufferPcb);
+    return pcbAActualizar;
+}
+
 void atender_pcb() {
     while(1) {
+        
         sem_wait(&semPcbEnExec); 
         
         pthread_mutex_lock(&mutex_Ex);
-        
-        t_pcb* pcb = list_get(pcbEnExec, 0); // saca el primer pcb de la lista
-        
+        t_pcb* pcb = list_get(pcbEnExec, 0); // saca el primer pcb de la lista de exec
         pthread_mutex_unlock(&mutex_Ex);
-        
+        log_info(loggerKernel, "Atendiendo proceso en EXEC %d ", pcb->pid);
         //TENGO QUE ENVIARLE EL CONTEXTO A LA CPU
-        kernel_enviar_pcb_a_cpu(pcb, kernelConfig, kernelLogger, HEADER_proceso_a_ejecutar);
+        kernel_enviar_pcb_a_cpu(pcb, configKernel, loggerKernel, HEADER_proceso_a_ejecutar);
         
-        uint8_t cpuRespuesta = stream_recibir_header(kernel_config_obtener_socket_cpu(kernelConfig));
+        //ESPERO RESPUESTA DE CPU
+        uint8_t cpuRespuesta = stream_recibir_header(configKernel->SOCKET_CPU_DISPATCH);
 
-        pthread_mutex_lock(estado_obtener_mutex(estadoExec));
-        pcb = kernel_recibir_pcb_actualizado_de_cpu(pcb, cpuRespuesta, kernelConfig, kernelLogger);
+        pthread_mutex_lock(&mutex_Ex);
+        pcb = kernel_recibir_pcb_actualizado_de_cpu(pcb, cpuRespuesta, configKernel, loggerKernel);//TODO
+        //ultimoPcbEjecutado = pcb; // que pcb sigue ejecutando
+        list_remove(pcbEnExec, 0); // saca de ejec el proceso
+        pthread_mutex_unlock(&mutex_Ex);
 
-        ultimoPcbEjecutado = pcb; // que pcb sigue ejecutando
-        
-        list_remove(estado_obtener_lista(estadoExec), 0); // saca de ejec el proceso
-
-        pthread_mutex_unlock(estado_obtener_mutex(estadoExec));
-
-        uint32_t pidAEnviar = pcb_obtener_pid(pcb);
-        
         switch (cpuRespuesta) {
-
+            case HEADER_proceso_terminado:
+                log_info(loggerKernel, "Proceso finalizado <%d>", pcb->pid);
+                break;
             default:
-                log_error(kernelLogger, "Error al recibir mensaje de CPU");
+                log_error(loggerKernel, "Error al recibir mensaje de CPU");
                 exit(-1);
                 break;
         }

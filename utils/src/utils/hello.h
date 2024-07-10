@@ -16,23 +16,9 @@
 #include <commons/collections/list.h>
 #include <commons/string.h>
 #include <stdint.h>
-#include <inttypes.h>
 #include <readline/readline.h>
 #include "protocolo.h"
 
-typedef struct t_registros{
-    uint32_t PC;
-    uint8_t AX;
-    uint8_t BX;
-    uint8_t CX;
-    uint8_t DX;
-    uint32_t EAX;
-    uint32_t EBX;
-    uint32_t ECX;
-    uint32_t EDX;
-    uint32_t SI;
-    uint32_t DI;
-}t_registros;
 
 typedef struct t_contexto {
     uint32_t pid;
@@ -56,9 +42,6 @@ typedef struct t_pcb {
     est_pcb estado;
     char* pathInstrucciones;
 }t_pcb;
-
-
-
 struct t_kernel_config {
     char* IP_MEMORIA;
     char* PUERTO_MEMORIA;
@@ -70,7 +53,8 @@ struct t_kernel_config {
     int GRADO_MULTIPROGRAMACION;
     int QUANTUM;
 
-    int SOCKET_CPU;
+    int SOCKET_CPU_DISPATCH;
+    int SOCKET_CPU_INTERRUPT;
     int SOCKET_MEMORIA;
 }typedef t_kernel_config;
 
@@ -94,6 +78,9 @@ struct memoria_config {
     int tamPagina;
     char* pathInstrucciones;
     int retardoRespuesta;
+
+    int SOCKET_CPU;
+    int SOCKET_KERNEL;
 }typedef t_memoria_config;
 /**
 * @fn    decir_hola
@@ -104,6 +91,7 @@ void decir_hola(char* quien);
 int crear_conexion_servidor(char* puerto);
 int esperar_cliente(int socket_servidor, t_log* logger);
 int crear_conexion_cliente(char *ip, char* puerto);
-void buffer_desempaquetar_registros(t_buffer* buffer, t_registros* regs);
+
+//void buffer_desempaquetar_registros(t_buffer* buffer, t_registros* regs);
 void contexto_destruir(t_contexto* contexto);
 #endif

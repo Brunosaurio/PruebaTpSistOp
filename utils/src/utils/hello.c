@@ -70,19 +70,8 @@ int crear_conexion_cliente(char *ip, char* puerto)
 
 	return socket_cliente;
 }
-void buffer_desempaquetar_registros(t_buffer* buffer, t_registros* regs){
-	buffer_desempaquetar(buffer, regs->PC, sizeof(uint32_t));
-    buffer_desempaquetar(buffer, regs->AX, sizeof(uint8_t));
-    buffer_desempaquetar(buffer, regs->BX, sizeof(uint8_t));
-    buffer_desempaquetar(buffer, regs->CX, sizeof(uint8_t));
-    buffer_desempaquetar(buffer, regs->DX, sizeof(uint8_t));
-    buffer_desempaquetar(buffer, regs->EAX, sizeof(uint32_t));
-    buffer_desempaquetar(buffer, regs->EBX, sizeof(uint32_t));
-    buffer_desempaquetar(buffer, regs->ECX, sizeof(uint32_t));
-    buffer_desempaquetar(buffer, regs->EDX, sizeof(uint32_t));
-    buffer_desempaquetar(buffer, regs->SI, sizeof(uint32_t));
-	buffer_desempaquetar(buffer, regs->DI, sizeof(uint32_t));
-}
+
+
 void contexto_destruir(t_contexto* contexto){
 	free(contexto->registrosDeCPU);
 	free(contexto);
