@@ -139,9 +139,13 @@ void enviar_instruccion_a_Cpu(){
 	stream_recibir_buffer(configMemoria->SOCKET_CPU, datosDeBusqueda);
 	buffer_desempaquetar(datosDeBusqueda,&pid, sizeof(int));
 	buffer_desempaquetar(datosDeBusqueda,&programCounter,sizeof(int));
+	buffer_destruir(datosDeBusqueda);
 	log_info(loggerMemoria, "Recibido fetch de instruccion %d, del proceso %d", programCounter,pid);
-	//exit(-1);
-	rastrear_instruccion(pid, programCounter);
+	datosDeBusqueda = buffer_crear();
+	char* instruccion = rastrear_instruccion(pid, programCounter);
+	log_info(loggerMemoria, "Instruccion a devolver a CPU %s de largo %d", instruccion, string_length(instruccion));
+	buffer_empaquetar_string(datosDeBusqueda,instruccion);
+	stream_enviar_buffer(configMemoria->SOCKET_CPU,0,datosDeBusqueda);
 }
 
 void conexion_cpuDispatch_memoria()

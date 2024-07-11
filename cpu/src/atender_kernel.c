@@ -36,13 +36,20 @@ void prueba_mostrar_contexto(t_contexto* contexto){
 	log_info(cpuLogger, "AX %d", contexto->registrosDeCPU->AX);
 }
 
-void rastrear_instruccion(int pid, int programCounter){
+char* rastrear_instruccion(int pid, int programCounter){
     log_info(cpuLogger, "Rastreando instruccion %d, del proceso %d", pid, programCounter);
     t_buffer* datosDeBusqueda = buffer_crear();
     buffer_empaquetar(datosDeBusqueda, &pid, sizeof(int));
     buffer_empaquetar(datosDeBusqueda, &programCounter, sizeof(int));
     stream_enviar_buffer(cpuConfig->SOCKET_MEMORIA, HEADER_CPU_FETCH, datosDeBusqueda);
-    //Tengo que pedir una instruccion a Memoria
+    buffer_destruir(datosDeBusqueda);
+    datosDeBusqueda= buffer_crear();
+    int headerFS = stream_recibir_header(cpuConfig->SOCKET_MEMORIA);
+    stream_recibir_buffer(cpuConfig->SOCKET_MEMORIA,datosDeBusqueda);
+    char* instruccion = malloc(sizeof(char*));
+    buffer_desempaquetar_string(datosDeBusqueda,&instruccion);
+    log_info(cpuLogger, "Instruccion recibida: %s de largo %d", instruccion, string_length(instruccion));
+    return instruccion;//Tengo que pedir una instruccion a Memoria
 }
 
 void decodificar_instruccion(){
@@ -58,7 +65,7 @@ bool ejecutar_instruccion(){
 
 bool cpu_ejecutar_ciclo_de_instruccion(t_contexto* contexto) {
     bool parar = false;
-    rastrear_instruccion(contexto->pid,contexto->programCounter); //fetch
+    char* instruccionRecibida = rastrear_instruccion(contexto->pid,contexto->programCounter); //fetch
     decodificar_instruccion(); //decode
     parar = ejecutar_instruccion(); //execute
     check_interrupt();
