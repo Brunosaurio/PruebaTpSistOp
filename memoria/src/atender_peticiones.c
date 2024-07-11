@@ -132,15 +132,16 @@ int serverMemoria_escuchar_kernel(int server_socket, t_log* logger) {
 }
 
 void enviar_instruccion_a_Cpu(){
-	int pid = 0;
-    int programCounter = 0;
+	int pid = -1;
+    int programCounter = -1;
 
 	t_buffer* datosDeBusqueda = buffer_crear();
 	stream_recibir_buffer(configMemoria->SOCKET_CPU, datosDeBusqueda);
 	buffer_desempaquetar(datosDeBusqueda,&pid, sizeof(int));
 	buffer_desempaquetar(datosDeBusqueda,&programCounter,sizeof(int));
 	log_info(loggerMemoria, "Recibido fetch de instruccion %d, del proceso %d", programCounter,pid);
-	exit(-1);
+	//exit(-1);
+	rastrear_instruccion(pid, programCounter);
 }
 
 void conexion_cpuDispatch_memoria()
