@@ -43,6 +43,21 @@ void loggear_cambio_estado(const char* prev, const char* post, int pid) {
 
 /////////Planificador Largo plazo
 
+t_registros* iniciarRegistrosCpu(t_registros* registros){
+    registros->AX = 0;
+    registros->BX = 0;
+    registros->CX = 0;
+    registros->DX = 0;
+    registros->EAX= 0;
+    registros->EBX= 0;
+    registros->ECX= 0;
+    registros->EDX= 0;
+    registros->DI = 0;
+    registros->PC = 0;
+    registros->SI = 0;
+    return registros;
+}
+
 void iniciar_proceso_en_kernel(char* path){
     int pid = obtener_siguiente_pid();
 	t_pcb* procesoNuevo = malloc(sizeof(t_pcb));
@@ -51,6 +66,7 @@ void iniciar_proceso_en_kernel(char* path){
     procesoNuevo->estado = NEW;
     procesoNuevo->programCounter=0;
     procesoNuevo->registros_CPU = malloc(sizeof(t_registros));
+    procesoNuevo->registros_CPU = iniciarRegistrosCpu(procesoNuevo->registros_CPU);
     procesoNuevo->quantum = 0;
     procesoNuevo->pathInstrucciones = strdup(path);
 	
@@ -131,14 +147,14 @@ void planificador_corto_plazo() {
         log_info(loggerKernel, "Se permite dispatch");
 
         sem_wait(&semProcesoEnReady);
-		log_info(loggerKernel, "Se toma una instancia de READY");
+		
 		//algoritmoConfigurado == ALGORITMO_FIFO
         if(strcmp(configKernel->ALGORITMO_PLANIFICACION,"FIFO") == 0){
 
 			pthread_mutex_lock(&mutex_Ready);
     		pcbToDispatch = (t_pcb*) list_remove(procesosEnReady,0);
     		pthread_mutex_unlock(&mutex_Ready);
-
+            
 
         }else{
             log_info(loggerKernel, "No se reconoce el algoritmo de planificacion");
@@ -146,6 +162,7 @@ void planificador_corto_plazo() {
             //pcbToDispatch = iniciar_HRRN(estadoReady, kernel_config_obtener_hrrn_alfa(kernelConfig));
         }
 		list_add(pcbEnExec,pcbToDispatch);
+        loggear_cambio_estado("READY", "EXEC", pcbToDispatch->pid);
         sem_post(&semPcbEnExec);
     }
 }
@@ -158,7 +175,7 @@ void kernel_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, t_kernel_config* kernelConfig, t
     
     buffer_empaquetar(bufferPcbAEjecutar, &pidAEnviar, sizeof(pidAEnviar));
     buffer_empaquetar(bufferPcbAEjecutar, &pcAEnviar, sizeof(pcAEnviar));
-    //buffer_empaquetar_registros(bufferPcbAEjecutar, pcbAEnviar->registros_CPU);
+    buffer_empaquetar_registros(bufferPcbAEjecutar, pcbAEnviar->registros_CPU);
     log_info(kernelLogger, "Enviando contexto a CPU del proceso %d, header %d, socket %d", pidAEnviar, header, kernelConfig->SOCKET_CPU_DISPATCH);
     stream_enviar_buffer(kernelConfig->SOCKET_CPU_DISPATCH, header, bufferPcbAEjecutar);
 

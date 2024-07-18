@@ -2,16 +2,15 @@
 #include <utils/hello.h>
 
 extern t_log* cpuLogger;
+extern t_registros* registrosCPU;
 
-/*void ejecutar_SET(t_contexto* contexto, char* reg, char* param) {
+void ejecutar_SET(t_contexto* contexto, char* reg, char* param) {
     
-    log_info(cpuLogger, "PID: %d - Ejecutando: SET ", contexto_obtener_pid(contexto));
-    uint32_t retardo = (cpu_config_obtener_retardo_instruccion(cpuConfig))/1000;
-    sleep(retardo);
+    log_info(cpuLogger, "PID: %d - Ejecutando: SET ", contexto->pid);
 
     if(strcmp(reg,"AX") == 0){
-        copiarStringAVector(param, registrosDeCpu.AX, 1);
-    }else if (strcmp(reg,"BX") == 0){
+        contexto->registrosDeCPU->AX = atoi(param);
+    }/*else if (strcmp(reg,"BX") == 0){
         copiarStringAVector(param, registrosDeCpu.BX, 1);
     }else if (strcmp(reg,"CX") == 0){
         copiarStringAVector(param, registrosDeCpu.CX, 1);
@@ -31,7 +30,7 @@ extern t_log* cpuLogger;
         copiarStringAVector(param, registrosDeCpu.SI, 4);
     }else if (strcmp(reg,"DI") == 0){
         copiarStringAVector(param, registrosDeCpu.DI, 4);
-    }else{
+    }*/else{
         log_info(cpuLogger, "error al ejecutar SET");
     }
 

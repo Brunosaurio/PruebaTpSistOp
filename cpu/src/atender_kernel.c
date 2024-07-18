@@ -22,6 +22,7 @@ int serverCpu_escuchar_kernel(int server_socket, t_log* logger) {
 	return 0;
 }*/
 
+
 t_contexto* crear_contexto(uint32_t pid, uint32_t programCounter){
     t_contexto *contexto = malloc(sizeof(t_contexto));
     contexto->pid = pid;
@@ -56,8 +57,23 @@ void decodificar_instruccion(){
     //recibo alguna estructura que contenga todos los datos necesarios de la instruccion
 }
 
-bool ejecutar_instruccion(){
-    return true;//Modifico lo que sea que daba modificar
+bool ejecutar_instruccion(t_contexto* contexto, char* instruccion){
+    char** contenedorInstruccion = string_split(instruccion, " ");
+    if(strcmp(contenedorInstruccion[0],"SET")== 0){
+        ejecutar_SET(contexto, contenedorInstruccion[1], contenedorInstruccion[2]);
+        
+        prueba_mostrar_contexto(contexto);
+        
+        return false;
+    }else if (strcmp(contenedorInstruccion[0],"EXIT")== 0){
+        log_info(cpuLogger,"EJECUTANDO EXIT");
+        return true;
+    }
+    else {
+        log_info(cpuLogger, "INSTRUCCION NO RECONOCIDA");
+        return true;//Modifico lo que sea que daba modificar
+    }
+    
 }
  void check_interrupt(){
     //revisar si hay alguna interrupcion pendiente por atender. Como tratamos las interrupciones?
@@ -67,7 +83,7 @@ bool cpu_ejecutar_ciclo_de_instruccion(t_contexto* contexto) {
     bool parar = false;
     char* instruccionRecibida = rastrear_instruccion(contexto->pid,contexto->programCounter); //fetch
     decodificar_instruccion(); //decode
-    parar = ejecutar_instruccion(); //execute
+    parar = ejecutar_instruccion(contexto,instruccionRecibida); //execute
     check_interrupt();
     return parar;
 }
@@ -95,7 +111,7 @@ void atender_peticiones_kernel(){
             
 			contexto = crear_contexto(pidRecibido, programCounter);
             
-            //buffer_desempaquetar_registros(bufferContexto, contexto->registrosDeCPU);
+            buffer_desempaquetar_registros(bufferContexto, contexto->registrosDeCPU);
             buffer_destruir(bufferContexto);
 			
 			prueba_mostrar_contexto(contexto);
@@ -103,6 +119,7 @@ void atender_peticiones_kernel(){
             bool pararDeEjecutar = false;
             while (!pararDeEjecutar) {
                 pararDeEjecutar = cpu_ejecutar_ciclo_de_instruccion(contexto);
+                contexto->programCounter = contexto->programCounter + 1;
             }
             contexto_destruir(contexto);
     }

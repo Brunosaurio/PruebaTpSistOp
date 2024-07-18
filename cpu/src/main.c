@@ -7,6 +7,7 @@
 
 t_log* cpuLogger;
 t_cpu_config* cpuConfig;
+t_registros* registrosCPU;
 
 t_cpu_config* cargarCpuConfig(char* path, t_log* logger) {
     t_config* tempCfg = config_create(path);
@@ -52,8 +53,8 @@ t_registros* iniciarRegistrosCpu(t_registros* registros){
 int main(int argc, char* argv[]) {
     cpuLogger = log_create("Cpu.log", "CPU", 1, LOG_LEVEL_DEBUG);
     cpuConfig = cargarCpuConfig(argv[1],cpuLogger);
-    t_registros* registros = malloc(sizeof(t_registros));
-    registros = iniciarRegistrosCpu(registros);
+    registrosCPU = malloc(sizeof(t_registros));
+    registrosCPU = iniciarRegistrosCpu(registrosCPU);
     decir_hola("CPU");
     //cpu se conecta al servidor memoria
     int socketMemoria = crear_conexion_cliente(cpuConfig->IP_MEMORIA, cpuConfig->PUERTO_MEMORIA);
