@@ -22,7 +22,8 @@ void atender_instruccion_validada(char* leido){
         pthread_detach(un_hilo);*/
 
     }else if(strcmp(comando_consola[0], "FINALIZAR_PROCESO" ) == 0 ){
-    
+        finalizar_proceso(ubicar_pcb_por_id_en_sistema(atoi(comando_consola[1])), 5);
+        //ubicar_pcb_por_id_en_sistema(comando_consola[1]); Prueba de la funcion
     }else if(strcmp(comando_consola[0], "DETENER_PLANIFICACION") == 0){
     
     }else if (strcmp (comando_consola[0], "INICIAR_PLANIFICACION") == 0){

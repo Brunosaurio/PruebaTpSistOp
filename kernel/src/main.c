@@ -8,10 +8,12 @@
 extern pthread_mutex_t mutex_New;
 extern pthread_mutex_t mutex_Ready;
 extern pthread_mutex_t mutex_Ex;
+extern pthread_mutex_t mutex_Exit;
 
 extern sem_t semProcesoEnNew;
 extern sem_t semProcesoEnReady;
 extern sem_t semPcbEnExec;
+extern sem_t semPcbEnExit;
 extern sem_t semGradoMultiprogramacion;
 extern sem_t dispatchPermitido;
 
@@ -40,15 +42,15 @@ void iniciar_semaforos(){
     sem_init(&semProcesoEnNew,0,0);
     sem_init(&semProcesoEnReady,0,0);
     sem_init(&semPcbEnExec,0,0);
+    sem_init(&semPcbEnExit,0,0);
     sem_init(&dispatchPermitido,0,1);
+
     sem_init(&semGradoMultiprogramacion,0,configKernel->GRADO_MULTIPROGRAMACION);
-
-
 
     pthread_mutex_init(&mutex_New,NULL);
     pthread_mutex_init(&mutex_Ready,NULL);
     pthread_mutex_init(&mutex_Ex,NULL);
-
+    pthread_mutex_init(&mutex_Exit,NULL);
     
 }
 

@@ -93,5 +93,6 @@ int esperar_cliente(int socket_servidor, t_log* logger);
 int crear_conexion_cliente(char *ip, char* puerto);
 
 //void buffer_desempaquetar_registros(t_buffer* buffer, t_registros* regs);
+void pcb_destruir(t_pcb* self);
 void contexto_destruir(t_contexto* contexto);
 #endif

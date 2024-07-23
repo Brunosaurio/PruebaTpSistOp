@@ -7,5 +7,8 @@ void loggear_cambio_estado(const char* prev, const char* post, int pid);
 void planificador_largo_plazo(void);
 void planificador_corto_plazo();
 void atender_pcb();
+
+void finalizar_proceso(t_pcb* pcb, int motivoDeFinalizacion);
+void finalizar_pcbs_en_hilo_con_exit(void);
 void kernel_enviar_pcb_a_cpu(t_pcb* pcbAEnviar, t_kernel_config* kernelConfig, t_log* kernelLogger, uint8_t header);
 t_pcb* kernel_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t cpuResponse, t_kernel_config* kernelConfig, t_log* kernelLogger);

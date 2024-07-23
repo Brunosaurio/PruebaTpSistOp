@@ -7,10 +7,12 @@ pthread_mutex_t mutex_pausa;
 pthread_mutex_t mutex_New;
 pthread_mutex_t mutex_Ready;
 pthread_mutex_t mutex_Ex;
+pthread_mutex_t mutex_Exit;
 
 sem_t semProcesoEnNew;
 sem_t semProcesoEnReady;
 sem_t semPcbEnExec;
+sem_t semPcbEnExit;
 sem_t semGradoMultiprogramacion;
 sem_t dispatchPermitido;
 
@@ -20,6 +22,16 @@ uint32_t siguientePID = 0;
 
 extern t_log* loggerKernel;
 extern t_kernel_config* configKernel;
+
+typedef enum{
+    SUCCESS,
+    SEG_FAULT,
+    OUT_OF_MEMORY,
+    WAIT_DE_RECURSO_NO_EXISTENTE,
+    SIGNAL_DE_RECURSO_NO_EXISTENTE,
+    FIN_POR_CONSOLA
+
+} t_mot_fin;
 
 //Colas/Listas//
 extern t_list* pcbEnExec;
@@ -89,6 +101,82 @@ void iniciar_proceso_en_memoria(t_pcb* unPcb){
 	buffer_destruir(a_enviar);
 }
 
+t_pcb* ubicar_pcb_por_id_en_sistema(int id){
+    bool tieneid(void* pcb){
+        return ((t_pcb*)pcb)->pid == id;
+    }
+    t_pcb* hayMatch= malloc(sizeof(t_pcb));
+    hayMatch = (t_pcb*) list_find(procesosEnNew,tieneid);
+    if(hayMatch==NULL) hayMatch = (t_pcb*)list_find(procesosEnReady,tieneid);
+    if(hayMatch==NULL) hayMatch = (t_pcb*)list_find(pcbEnExec,tieneid);
+    if(hayMatch==NULL) hayMatch = (t_pcb*)list_find(procesosEnBloq,tieneid);
+    if(hayMatch==NULL) {
+        log_info(loggerKernel,"No se encontro al proceso <%d> en el sistema", id);
+        return NULL;
+    }
+    else{
+        log_info(loggerKernel,"Se encontro al proceso <%d> en el sistema en estado %d: ", hayMatch->pid,hayMatch->estado);
+        return hayMatch;
+    }
+}
+
+void finalizar_proceso(t_pcb* pcb, int motivoDeFinalizacion){
+    
+    pcb->estado = EXIT;
+    
+    pthread_mutex_lock(&mutex_Exit);
+    list_add(procesosEnExit, pcb);
+    pthread_mutex_unlock(&mutex_Exit);
+    
+    loggear_cambio_estado("EXEC", "EXIT", pcb->pid);
+    sem_post(&semPcbEnExit);
+    switch (motivoDeFinalizacion)
+    {
+    case SUCCESS: // caso feliz
+        log_info(loggerKernel, "Se finaliza PCB <ID %d> por motivo: SUCCESS", pcb->pid);
+        break;
+    case SEG_FAULT: // caso seg fault
+        log_error(loggerKernel, "Se finaliza PCB <ID %d> por motivo: SEG_FAULT", pcb->pid);
+        break;
+    case OUT_OF_MEMORY: 
+        log_error(loggerKernel, "Se finaliza PCB <ID %d> por motivo: OUT_OF_MEMORY", pcb->pid);
+        break;
+    case WAIT_DE_RECURSO_NO_EXISTENTE:
+        log_error(loggerKernel, "Se finaliza PCB <ID %d> por motivo: WAIT_DE_RECURSO_NO_EXISTENTE", pcb->pid);
+        break;
+    case SIGNAL_DE_RECURSO_NO_EXISTENTE:
+        log_error(loggerKernel, "Se finaliza PCB <ID %d> por motivo: SIGNAL_DE_RECURSO_NO_EXISTENTE", pcb->pid);
+        break;
+    case FIN_POR_CONSOLA:
+        log_error(loggerKernel, "Se finaliza PCB <ID %d> por motivo: FINALIZACION_POR_COMANDO_DE_CONSOLA", pcb->pid);
+    }
+}
+
+void finalizar_pcbs_en_hilo_con_exit(void) {
+    while(1) {
+        sem_wait(&semPcbEnExit);
+        //sem_wait(&controlDeIntercambioDePcbs);
+        t_pcb* pcbALiberar = list_remove(procesosEnExit,0);
+
+        /*t_buffer* bufferParaMemoria = buffer_crear();
+        uint32_t idDePcbALiberar = pcb_obtener_pid(pcbALiberar);
+        buffer_empaquetar(bufferParaMemoria,&idDePcbALiberar,sizeof(idDePcbALiberar));
+        stream_enviar_buffer(kernel_config_obtener_socket_memoria(kernelConfig), HEADER_finalizar_proceso_en_memoria, bufferParaMemoria);
+        buffer_destruir(bufferParaMemoria);
+        //sem_post(&controlDeIntercambioDePcbs);
+        bool esPCBATerminar(void*pcbAux){
+                t_pcb* procesoATerminar = (t_pcb*) pcbAux;
+                return pcb_obtener_pid(procesoATerminar) == pcb_obtener_pid(pcbALiberar); 
+            }
+        int* indiceProcesoAFinalizar =  malloc(sizeof(*indiceProcesoAFinalizar));
+        list_find_element_and_index(listaDePcbs, esPCBATerminar, indiceProcesoAFinalizar);
+        list_remove(listaDePcbs, *indiceProcesoAFinalizar);
+        free(indiceProcesoAFinalizar);*/
+        //stream_enviar_buffer_vacio(pcb_obtener_socket_consola(pcbALiberar), HEADER_proceso_terminado);
+        pcb_destruir(pcbALiberar);
+        sem_post(&semGradoMultiprogramacion);
+    }
+}
 
 void planificador_largo_plazo(void) {
     /*pthread_t liberarPcbsEnExitHilo;
@@ -190,7 +278,7 @@ t_pcb* kernel_recibir_pcb_actualizado_de_cpu(t_pcb* pcbAActualizar, uint8_t cpuR
     stream_recibir_buffer(kernelConfig->SOCKET_CPU_DISPATCH, bufferPcb);
     buffer_desempaquetar(bufferPcb, &pidRecibido, sizeof(pidRecibido));
     buffer_desempaquetar(bufferPcb, &programCounterActualizado, sizeof(programCounterActualizado));
-    //buffer_desempaquetar_registros(bufferPcb, pcbAActualizar->registros_CPU);
+    buffer_desempaquetar_registros(bufferPcb, pcbAActualizar->registros_CPU);
     /*
     if (pidRecibido == pcb_obtener_pid(pcbAActualizar)) { /// si es el mismo al que tenes en kernel
         if (cpuResponse == HEADER_proceso_bloqueado) {

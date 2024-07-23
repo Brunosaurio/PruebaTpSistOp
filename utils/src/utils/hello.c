@@ -71,6 +71,11 @@ int crear_conexion_cliente(char *ip, char* puerto)
 	return socket_cliente;
 }
 
+void pcb_destruir(t_pcb* self) {
+	free(self->registros_CPU);
+	free(self->pathInstrucciones);
+    free(self);
+}
 
 void contexto_destruir(t_contexto* contexto){
 	free(contexto->registrosDeCPU);
